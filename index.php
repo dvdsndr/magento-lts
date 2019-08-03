@@ -1,4 +1,7 @@
 <?php
+
+/*define ('FPC_DEFAULT_STORE','au');
+include 'fpc.php';*/
 /**
  * Magento
  *
@@ -20,24 +23,16 @@
  *
  * @category    Mage
  * @package     Mage
- * @copyright  Copyright (c) 2006-2019 Magento, Inc. (http://www.magento.com)
+ * @copyright  Copyright (c) 2006-2016 X.commerce, Inc. and affiliates (http://www.magento.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-if (version_compare(phpversion(), '5.3.0', '<')===true) {
-    echo  '<div style="font:12px/1.35em arial, helvetica, sans-serif;">
-<div style="margin:0 0 25px 0; border-bottom:1px solid #ccc;">
-<h3 style="margin:0; font-size:1.7em; font-weight:normal; text-transform:none; text-align:left; color:#2f2f2f;">
-Whoops, it looks like you have an invalid PHP version.</h3></div><p>Magento supports PHP 5.3.0 or newer.
-<a href="http://www.magentocommerce.com/install" target="">Find out</a> how to install</a>
- Magento using PHP-CGI as a work-around.</p></div>';
-    exit;
-}
-
-/**
- * Compilation includes configuration file
- */
 define('MAGENTO_ROOT', getcwd());
+
+$compilerConfig = MAGENTO_ROOT . '/includes/config.php';
+if (file_exists($compilerConfig)) {
+    include $compilerConfig;
+}
 
 $mageFilename = MAGENTO_ROOT . '/app/Mage.php';
 $maintenanceFile = 'maintenance.flag';
@@ -69,10 +64,117 @@ if (isset($_SERVER['MAGE_IS_DEVELOPER_MODE'])) {
 
 umask(0);
 
-/* Store or website code */
-$mageRunCode = isset($_SERVER['MAGE_RUN_CODE']) ? $_SERVER['MAGE_RUN_CODE'] : '';
+/* Cloudflare redirect based on GEOIP #DS-31-08-2016 */
 
-/* Run store or run website */
-$mageRunType = isset($_SERVER['MAGE_RUN_TYPE']) ? $_SERVER['MAGE_RUN_TYPE'] : 'store';
+if (isset ($_COOKIE['store'])) {
+	$country_code = strtoupper($_COOKIE['store']);
+} else {
+       if (isset ($_SERVER["HTTP_CF_IPCOUNTRY"])) 
+	    $country_code = $_SERVER["HTTP_CF_IPCOUNTRY"];
+       else
+            $country_code = "XX";
+} // Checks for store cookie, if not available uses Cloudflare
 
-Mage::run($mageRunCode, $mageRunType);
+$euArray = array('GB','AT','BE','HR','CY','CZ','DK','EE','FI','GR','HU','IS','IE','LU','MD','MC','NL','NO','PL','PT','RO','RU','SK','SI','SE','CH','UA','VA','UK');
+
+$auArray = array('AU','NZ');
+
+$store_call=false;
+
+if (substr($_SERVER['REQUEST_URI'],0,4) == '/au/') { $store_call=true; setcookie('store', 'AU', time() + (86400 * 30), '/'); }
+else if (substr($_SERVER['REQUEST_URI'],0,4) == '/uk/') { $store_call=true; setcookie('store', 'UK', time() + (86400 * 30), '/'); }
+else if (substr($_SERVER['REQUEST_URI'],0,4) == '/ca/') { $store_call=true; setcookie('store', 'CA', time() + (86400 * 30), '/'); }
+else if (substr($_SERVER['REQUEST_URI'],0,4) == '/us/') { $store_call=true; setcookie('store', 'US', time() + (86400 * 30), '/'); }
+else if (substr($_SERVER['REQUEST_URI'],0,7) == '/us_es/') { $store_call=true; setcookie('store', 'US', time() + (86400 * 30), '/'); }
+else if (substr($_SERVER['REQUEST_URI'],0,4) == '/it/') { $store_call=true; setcookie('store', 'IT', time() + (86400 * 30), '/'); }
+else if (substr($_SERVER['REQUEST_URI'],0,4) == '/fr/') { $store_call=true; setcookie('store', 'FR', time() + (86400 * 30), '/'); }
+else if (substr($_SERVER['REQUEST_URI'],0,4) == '/de/') { $store_call=true; setcookie('store', 'DE', time() + (86400 * 30), '/'); }
+else if (substr($_SERVER['REQUEST_URI'],0,4) == '/mx/') { $store_call=true; setcookie('store', 'MX', time() + (86400 * 30), '/'); }
+else if (substr($_SERVER['REQUEST_URI'],0,4) == '/es/') { $store_call=true; setcookie('store', 'ES', time() + (86400 * 30), '/'); }
+else if (substr($_SERVER['REQUEST_URI'],0,4) == '/jp/') { $store_call=true; setcookie('store', 'JP', time() + (86400 * 30), '/'); }
+else if (substr($_SERVER['REQUEST_URI'],0,17) == '/index.php/admin/') { $store_call=true; }
+else 
+	{ 
+		$store_call=true;		
+		if(in_array($country_code,$auArray)) { header('Location: https://'.($_SERVER['HTTP_HOST']).'/au'.($_SERVER['REQUEST_URI'])); die(); }
+		elseif(in_array($country_code,$euArray)) { header('Location: https://'.($_SERVER['HTTP_HOST']).'/uk'.($_SERVER['REQUEST_URI'])); die(); }
+		elseif($country_code == "CA") { header('Location: https://'.($_SERVER['HTTP_HOST']).'/ca'.($_SERVER['REQUEST_URI'])); die(); }
+		elseif($country_code == "IT") { header('Location: https://'.($_SERVER['HTTP_HOST']).'/it'.($_SERVER['REQUEST_URI'])); die(); }
+		elseif($country_code == "FR") { header('Location: https://'.($_SERVER['HTTP_HOST']).'/fr'.($_SERVER['REQUEST_URI'])); die(); }
+		elseif($country_code == "DE") { header('Location: https://'.($_SERVER['HTTP_HOST']).'/de'.($_SERVER['REQUEST_URI'])); die(); }
+		elseif($country_code == "MX") { header('Location: https://'.($_SERVER['HTTP_HOST']).'/mx'.($_SERVER['REQUEST_URI'])); die();}
+		elseif($country_code == "ES") { header('Location: https://'.($_SERVER['HTTP_HOST']).'/es'.($_SERVER['REQUEST_URI'])); die();}
+		elseif($country_code == "JP") { header('Location: https://'.($_SERVER['HTTP_HOST']).'/jp'.($_SERVER['REQUEST_URI'])); die();}
+		else { header('Location: https://'.($_SERVER['HTTP_HOST']).'/us'.($_SERVER['REQUEST_URI'])); die(); }
+	}
+
+if(in_array($country_code,$auArray)){
+	if ( !$store_call ) {
+		$_SERVER['REQUEST_URI'] = '/au' . $_SERVER['REQUEST_URI'];
+	} 	
+	Mage::run('au','store');
+}
+ 
+elseif(in_array($country_code,$euArray)){
+	if ( !$store_call ) {
+		$_SERVER['REQUEST_URI'] = '/uk' . $_SERVER['REQUEST_URI'];
+	}
+	Mage::run('uk','store'); 
+}
+ 
+elseif($country_code == "CA"){
+	if ( !$store_call ) {
+		$_SERVER['REQUEST_URI'] = '/ca' . $_SERVER['REQUEST_URI'];
+	}
+    Mage::run('ca','store');
+}
+
+elseif($country_code == "IT"){
+	if ( !$store_call ) {
+		$_SERVER['REQUEST_URI'] = '/it/' . $_SERVER['REQUEST_URI'];
+	}
+    Mage::run('it','store');
+}
+
+elseif($country_code == "FR"){
+	if ( !$store_call ) {
+		$_SERVER['REQUEST_URI'] = '/fr/' . $_SERVER['REQUEST_URI'];
+	}
+    Mage::run('fr','store');
+}
+
+elseif($country_code == "DE"){
+	if ( !$store_call ) {
+		$_SERVER['REQUEST_URI'] = '/de/' . $_SERVER['REQUEST_URI'];
+	}
+    Mage::run('de','store');
+}
+
+
+elseif($country_code == "MX"){
+	if ( !$store_call ) {
+		$_SERVER['REQUEST_URI'] = '/mx/' . $_SERVER['REQUEST_URI'];
+	}
+    Mage::run('mx','store');
+}
+
+elseif($country_code == "ES"){
+	if ( !$store_call ) {
+		$_SERVER['REQUEST_URI'] = '/es/' . $_SERVER['REQUEST_URI'];
+	}
+    Mage::run('es','store');
+}
+
+elseif($country_code == "JP"){
+	if ( !$store_call ) {
+		$_SERVER['REQUEST_URI'] = '/jp/' . $_SERVER['REQUEST_URI'];
+	}
+    Mage::run('jp','store');
+}
+
+else{
+	if ( !$store_call ) {
+		$_SERVER['REQUEST_URI'] = '/us' . $_SERVER['REQUEST_URI'];
+	}
+    Mage::run('us','store');
+}
