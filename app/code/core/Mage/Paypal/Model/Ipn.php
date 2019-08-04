@@ -20,7 +20,7 @@
  *
  * @category    Mage
  * @package     Mage_Paypal
- * @copyright  Copyright (c) 2006-2019 Magento, Inc. (http://www.magento.com)
+ * @copyright  Copyright (c) 2006-2018 Magento, Inc. (http://www.magento.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -535,6 +535,11 @@ class Mage_Paypal_Model_Ipn
         $this->_order
             ->registerCancellation($this->_createIpnComment(''), false)
             ->save();
+        // MOD SMCD paypal bug, must remove invoice before order cancel otherwhise order cancle will fail and go to processing
+        foreach ($this->_order->getInvoiceCollection() as $invoice){
+            $invoice->cancel()->save();
+        }
+        // end of MOD
     }
 
     /**
