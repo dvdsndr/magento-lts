@@ -29,10 +29,11 @@ include 'fpc.php';*/
 
 define('MAGENTO_ROOT', getcwd());
 
-$compilerConfig = MAGENTO_ROOT . '/includes/config.php';
-if (file_exists($compilerConfig)) {
-    include $compilerConfig;
-}
+// MOD SMCD compiler now gone
+//$compilerConfig = MAGENTO_ROOT . '/includes/config.php';
+//if (file_exists($compilerConfig)) {
+//    include $compilerConfig;
+//}
 
 $mageFilename = MAGENTO_ROOT . '/app/Mage.php';
 $maintenanceFile = 'maintenance.flag';
