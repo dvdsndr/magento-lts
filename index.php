@@ -23,7 +23,11 @@ include 'fpc.php';*/
  *
  * @category    Mage
  * @package     Mage
+<<<<<<< HEAD
  * @copyright  Copyright (c) 2006-2016 X.commerce, Inc. and affiliates (http://www.magento.com)
+=======
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+>>>>>>> 17a8221a0bbb7b6d1d8658e2f8613970507de8e0
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
